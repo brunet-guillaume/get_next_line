@@ -3,16 +3,37 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gbrunet <guill@umebrunet.fr>               +#+  +:+       +#+        */
+/*   By: gbrunet <gbrunet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/11/11 14:42:33 by gbrunet           #+#    #+#             */
-/*   Updated: 2023/11/11 18:24:36 by gbrunet          ###   ########.fr       */
+/*   Created: 2023/11/13 08:49:31 by gbrunet           #+#    #+#             */
+/*   Updated: 2023/11/13 12:20:00 by gbrunet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
+#include <stdio.h>
 
-char	*read_fd(int fd, char *line)
+char	*add_buffer(char *p_line, char *buf)
+{
+	char	*n_line;
+
+	if (!p_line)
+	{
+		p_line = malloc(sizeof(char));
+		if (!p_line)
+			return (NULL);
+		p_line[0] = 0;
+	}
+	if (!p_line[0] && !buf[0])
+		return (clean_exit(p_line));
+	n_line = join_str(p_line, buf);
+	if (!n_line)
+		return (clean_exit(p_line));
+	free(p_line);
+	return (n_line);
+}
+
+char	*read_fd(int fd, char *prev_line)
 {
 	char	*buffer;
 	ssize_t	r;
@@ -21,70 +42,102 @@ char	*read_fd(int fd, char *line)
 	if (!buffer)
 		return (NULL);
 	r = 1;
-	while (find_endl(line) == -1 && r != 0)
+	while (r != 0 && get_endl_pos(prev_line) == -1)
 	{
 		r = read(fd, buffer, BUFFER_SIZE);
+		if (r == -1)
+		{
+			free(buffer);
+			return (NULL);
+		}
 		buffer[r] = 0;
-		line = add_buffer(buffer, line);
+		prev_line = add_buffer(prev_line, buffer);
 	}
 	free(buffer);
-	return (line);
+	return (prev_line);
 }
 
-char	*get_line(char *s)
+char	*get_line(char *prev_line)
 {
-	char	*str;
 	int		endl_pos;
-	int		i;
+	char	*curr_line;
+	size_t	i;
 
-	endl_pos = find_endl(s) + 1;
-	str = malloc(endl_pos * sizeof(char));
-	if (!str)
+	endl_pos = get_endl_pos(prev_line);
+	if (endl_pos == -1)
+		endl_pos = ft_strlen(prev_line) - 1;
+	curr_line = malloc((endl_pos + 1 + 1) * sizeof(char));
+	if (!curr_line)
 		return (NULL);
-	i = -1;
-	while (++i < endl_pos)
-		str[i] = s[i];
-	str[i] = 0;
-	free(s);
-	return (str);
+	i = 0;
+	while ((int)i < endl_pos + 1)
+	{
+		curr_line[i] = prev_line[i];
+		i++;
+	}
+	curr_line[i] = 0;
+	return (curr_line);
 }
 
-char	*save_rest(char	*s)
+char	*save_line(char *p_line)
 {
-	char	*str;
-	size_t	endl_pos;
+	int		endl_pos;
+	int		p_line_len;
+	char	*n_p_line;
 	int		i;
 
-	endl_pos = find_endl(s) + 1;
-	str = malloc((ft_strlen(s) - endl_pos + 2) * sizeof(char));
-	if (!str)
-		return (NULL);
+	endl_pos = get_endl_pos(p_line);
+	if (endl_pos == -1)
+		return (clean_exit(p_line));
+	p_line_len = ft_strlen(p_line);
+	n_p_line = malloc((p_line_len - endl_pos) * sizeof(char));
+	if (!n_p_line)
+		return (clean_exit(p_line));
 	i = -1;
-	while (s[endl_pos + ++i])
-		str[i] = s[endl_pos + i];
-	str[i] = 0;
-	return (str);
+	while (endl_pos + 1 + ++i < p_line_len)
+		n_p_line[i] = p_line[endl_pos + 1 + i];
+	n_p_line[i] = 0;
+	free(p_line);
+	return (n_p_line);
 }
 
 char	*get_next_line(int fd)
 {
-	static char	*line;
-	char		*current_line;
+	static char	*prev_line;
+	char		*curr_line;
 
-	if (BUFFER_SIZE == 0 || fd < 0)
+	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
-	current_line = read_fd(fd, line);
-	if (find_endl(current_line) == -1)
+	prev_line = read_fd(fd, prev_line);
+	if (!prev_line)
+		return (NULL);
+	if (!prev_line[0])
 	{
-		if (line)
-		{
-			free(line);
-			line = NULL;
-			return (current_line);
-		}
+		free(prev_line);
 		return (NULL);
 	}
-	line = save_rest(current_line);
-	current_line = get_line(current_line);
-	return (current_line);
+	curr_line = get_line(prev_line);
+	prev_line = save_line(prev_line);
+	return (curr_line);
 }
+/*
+#include <fcntl.h>
+
+int	main(void)
+{
+	int		fd;
+	char	*line;
+	int		i;
+
+	i = 0;
+	fd = open("gnlTester/files/empty", O_RDONLY);
+	line = get_next_line(fd);
+	while (line)
+	{
+		printf("%d : %s", i++, line);
+		free(line);
+		line = get_next_line(fd);
+	}
+
+	return (0);
+}*/

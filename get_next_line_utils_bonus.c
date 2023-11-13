@@ -3,52 +3,46 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line_utils_bonus.c                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gbrunet <guill@umebrunet.fr>               +#+  +:+       +#+        */
+/*   By: gbrunet <gbrunet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/11/11 16:54:28 by gbrunet           #+#    #+#             */
-/*   Updated: 2023/11/11 18:23:42 by gbrunet          ###   ########.fr       */
+/*   Created: 2023/11/13 10:31:41 by gbrunet           #+#    #+#             */
+/*   Updated: 2023/11/13 14:24:07 by gbrunet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line_bonus.h"
 
-char	*add_buffer(char *buffer, char *line)
+void	*join_str(char *p_line, char *buf)
 {
-	char	*s;
-	char	*ptr;
+	char	*n_line;
+	int		p_len;
+	int		b_len;
+	int		i;
 
-	s = malloc((ft_strlen(line) + ft_strlen(buffer) + 1) * sizeof(char));
-	if (!s)
+	p_len = ft_strlen(p_line);
+	b_len = ft_strlen(buf);
+	n_line = malloc((p_len + b_len + 1) * sizeof(char));
+	if (!n_line)
 		return (NULL);
-	ptr = s;
-	if (line)
-		while (*line)
-			*s++ = *line++;
-	while (*buffer)
-		*s++ = *buffer++;
-	*s = 0;
-	return (ptr);
+	i = -1;
+	while (++i < p_len)
+		n_line[i] = p_line[i];
+	i--;
+	while (++i < b_len + p_len)
+		n_line[i] = buf[i - p_len];
+	n_line[i] = 0;
+	return (n_line);
 }
 
-int	find_endl(char *s)
+void	*clean_exit(char *p_line)
 {
-	size_t	i;
-
-	if (!s)
-		return (-1);
-	i = 0;
-	while (s[i])
-	{
-		if (s[i] == '\n')
-			return (i);
-		i++;
-	}
-	return (-1);
+	free(p_line);
+	return (NULL);
 }
 
-size_t	ft_strlen(char *s)
+int	ft_strlen(char *s)
 {
-	size_t	i;
+	int	i;
 
 	if (!s)
 		return (0);
@@ -56,4 +50,18 @@ size_t	ft_strlen(char *s)
 	while (s[i])
 		i++;
 	return (i);
+}
+
+int	get_endl_pos(char *prev_line)
+{
+	int		endl_pos;
+
+	if (!prev_line)
+		return (-1);
+	endl_pos = 0;
+	while (prev_line[endl_pos] && prev_line[endl_pos] != '\n')
+		endl_pos++;
+	if (prev_line[endl_pos] == '\n')
+		return (endl_pos);
+	return (-1);
 }
