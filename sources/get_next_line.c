@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-#include <stdio.h>
 
 char	*add_buffer(char *p_line, char *buf)
 {
@@ -120,24 +119,3 @@ char	*get_next_line(int fd)
 	prev_line = save_line(prev_line);
 	return (curr_line);
 }
-/*
-#include <fcntl.h>
-
-int	main(void)
-{
-	int		fd;
-	char	*line;
-	int		i;
-
-	i = 0;
-	fd = open("gnlTester/files/empty", O_RDONLY);
-	line = get_next_line(fd);
-	while (line)
-	{
-		printf("%d : %s", i++, line);
-		free(line);
-		line = get_next_line(fd);
-	}
-
-	return (0);
-}*/
